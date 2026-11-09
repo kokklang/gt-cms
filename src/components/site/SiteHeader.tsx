@@ -46,8 +46,15 @@ export function SiteHeader({ data }: { data: HeaderData }) {
   const login = c.login_enabled ? (
     <A
       href={hrefFor(c.login_action, c.login_target_section, c.login_link_url)}
+      newTab={c.login_open_new_tab}
       className="hdr-login"
-      style={{ background: c.login_btn_color, color: c.login_text_color }}
+      style={{
+        background: c.login_btn_color,
+        color: c.login_text_color,
+        border: c.login_border_width > 0
+          ? `${c.login_border_width}px solid ${c.login_border_color}`
+          : '1px solid transparent',
+      }}
     >
       {c.login_use_logo && c.login_logo_url && <img src={c.login_logo_url} alt="" />}
       {c.login_text}
@@ -55,11 +62,24 @@ export function SiteHeader({ data }: { data: HeaderData }) {
   ) : null
 
   return (
-    <header className="hdr" style={{ background: c.bg_color }}>
+    <header
+      className="hdr"
+      style={{
+        backgroundColor: c.bg_color,
+        backgroundImage: c.bg_image_url ? `url(${JSON.stringify(c.bg_image_url)})` : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
       <div className="hdr-bar">
-        <A href={hrefFor(c.logo_action, c.logo_target_section, c.logo_link_url)} className="hdr-logo">
+        <A
+          href={hrefFor(c.logo_action, c.logo_target_section, c.logo_link_url)}
+          newTab={c.logo_open_new_tab}
+          className="hdr-logo"
+          style={{ width: c.logo_mode === 'logo' ? `${Math.round(240 * c.logo_width / 100)}px` : undefined }}
+        >
           {c.logo_mode === 'logo' && c.logo_url ? (
-            <img src={c.logo_url} alt={c.logo_text ?? 'โลโก้'} />
+            <img src={c.logo_url} alt={c.logo_text ?? 'โลโก้'} style={{ width: '100%', maxWidth: 'none', height: 'auto' }} />
           ) : (
             <span>{c.logo_text}</span>
           )}

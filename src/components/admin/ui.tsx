@@ -41,7 +41,7 @@ export function Text({
   hint?: string
 }) {
   return (
-    <Row label={label} hint={hint}>
+    <Row label={label} hint={hint ?? (area ? 'พิมพ์ข้อความและขึ้นบรรทัดใหม่ได้' : 'กรอกข้อมูลที่ต้องการแสดงบนเว็บไซต์')}>
       {area ? (
         <textarea rows={3} value={value ?? ''} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
       ) : (
@@ -53,7 +53,7 @@ export function Text({
 
 export function Color({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
-    <Row label={label}>
+    <Row label={label} hint="เลือกสีที่ต้องการ ระบบจะแสดงรหัสสีด้านข้าง">
       <input type="color" value={value} onChange={(e) => onChange(e.target.value.toUpperCase())} />
       <span className="adm-hex">{value}</span>
     </Row>
@@ -62,7 +62,7 @@ export function Color({ label, value, onChange }: { label: string; value: string
 
 export function Check({ label, checked, onChange, hint }: { label: string; checked: boolean; onChange: (v: boolean) => void; hint?: string }) {
   return (
-    <Row label={label} hint={hint}>
+    <Row label={label} hint={hint ?? 'เปิดหรือปิดตัวเลือกนี้'}>
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
     </Row>
   )
@@ -70,7 +70,7 @@ export function Check({ label, checked, onChange, hint }: { label: string; check
 
 export function Sel({ label, value, options, onChange }: { label: string; value: string; options: Opt[]; onChange: (v: string) => void }) {
   return (
-    <Row label={label}>
+    <Row label={label} hint="เลือกตัวเลือกที่ต้องการ">
       <select value={value} onChange={(e) => onChange(e.target.value)}>
         {options.map(([v, t]) => (
           <option key={v} value={v}>{t}</option>
@@ -82,7 +82,7 @@ export function Sel({ label, value, options, onChange }: { label: string; value:
 
 export function Num({ label, value, min, max, onChange, hint }: { label: string; value: number; min: number; max: number; onChange: (v: number) => void; hint?: string }) {
   return (
-    <Row label={label} hint={hint}>
+    <Row label={label} hint={hint ?? `เลือกค่าระหว่าง ${min}–${max}`}>
       <input
         type="number" min={min} max={max} value={value}
         onChange={(e) => onChange(Math.min(max, Math.max(min, Number(e.target.value) || 0)))}
@@ -128,14 +128,33 @@ export async function uploadImage(file: File, folder: string): Promise<string> {
   return sb.storage.from('site-assets').getPublicUrl(path).data.publicUrl
 }
 
+export function ImageSizeChoices({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="adm-image-sizes" aria-label="ขนาดรูปแนะนำ">
+      {([[50, 'เล็ก'], [75, 'กลาง'], [100, 'ใหญ่']] as const).map(([v, label]) => (
+        <button
+          key={v}
+          type="button"
+          className={`chip${value === v ? ' on' : ''}`}
+          onClick={() => onChange(v)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function ImageField({
-  label, value, onChange, folder, hint,
+  label, value, onChange, folder, hint, width, onWidthChange,
 }: {
   label: string
   value: string | null
   onChange: (v: string | null) => void
   folder: string
   hint?: string
+  width?: number
+  onWidthChange?: (v: number) => void
 }) {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
@@ -155,8 +174,11 @@ export function ImageField({
   }
 
   return (
-    <Row label={label} hint={hint}>
+    <Row label={label} hint={hint ?? 'เลือกภาพประกอบ ขนาดไฟล์ไม่เกิน 5 MB'}>
       {value ? <img className="adm-thumb" src={value} alt="" /> : <span className="adm-thumb" />}
+      {onWidthChange && (
+        <ImageSizeChoices value={width ?? 100} onChange={onWidthChange} />
+      )}
       <label className="btn sm">
         <input type="file" accept="image/*" hidden onChange={pick} />
         {busy ? 'กำลังอัปโหลด…' : 'เลือกไฟล์'}
@@ -167,37 +189,66 @@ export function ImageField({
   )
 }
 
+export function LinkFields({
+  target, link, openNewTab, anchors, onChange,
+}: {
+  target: string | null
+  link: string | null
+  openNewTab: boolean
+  anchors: string[]
+  onChange: (p: { target_section?: string | null; link_url?: string | null; open_new_tab?: boolean }) => void
+}) {
+  const missing = !!target && !anchors.includes(target)
+  const sections: Opt[] = [['', 'ไม่เลือก section'], ...anchors.map((a): Opt => [a, a])]
+  if (missing && target) sections.push([target, `${target} (ไม่พบ)`])
+  return (
+    <div className="adm-link-fields">
+      <Row label="ไปยัง section" hint={missing ? `ไม่พบ section “${target}”` : 'เลือก section หรือใส่ URL ด้านล่าง'}>
+        <select value={target ?? ''} onChange={(e) => onChange({ target_section: e.target.value || null })}>
+          {sections.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+        </select>
+      </Row>
+      <Text
+        label="ลิงก์ URL" value={link}
+        placeholder="https://… หรือ /หน้าอื่น"
+        hint="ใส่ URL ภายนอก เช่น https://example.com หรือ path ภายใน เช่น /contact"
+        onChange={(link_url) => onChange({ link_url: link_url || null })}
+      />
+      <Check label="เปิดหน้าใหม่" checked={openNewTab} onChange={(open_new_tab) => onChange({ open_new_tab })} />
+    </div>
+  )
+}
+
 /* ───────── "เมื่อกด": ไม่เกิดอะไร / ไป section / ไป ลิงก์ / ดรอปดาวน์ ───────── */
 export function ActionFields({
-  action, target, link, anchors, allowDropdown, onChange,
+  action, target, link, anchors, allowDropdown, openNewTab, onNewTabChange, onChange,
 }: {
   action: ClickAction
   target: string | null
   link: string | null
   anchors: string[]
   allowDropdown?: boolean
+  openNewTab?: boolean
+  onNewTabChange?: (v: boolean) => void
   onChange: (v: { action: ClickAction; target: string | null; link: string | null }) => void
 }) {
   const opts: Opt[] = [['none', 'ไม่เกิดอะไร'], ['section', 'ไป section'], ['link', 'ไป ลิงก์']]
   if (allowDropdown) opts.push(['dropdown', 'เมนูดรอปดาวน์'])
-  const missing = action === 'section' && !!target && !anchors.includes(target)
-  const list: Opt[] = [['', 'เลือก…'], ...anchors.map((a): Opt => [a, a])]
-  if (missing && target) list.push([target, `${target} (ไม่พบ)`])
   return (
     <>
       <Sel label="เมื่อกด" value={action} options={opts} onChange={(v) => onChange({ action: v as ClickAction, target, link })} />
-      {action === 'section' && (
-        <Row label="เลือก section" hint={missing ? undefined : anchors.length ? undefined : 'ยังไม่มี section ใน body'}>
-          <select value={target ?? ''} onChange={(e) => onChange({ action, target: e.target.value || null, link })}>
-            {list.map(([v, t]) => (
-              <option key={v} value={v}>{t}</option>
-            ))}
-          </select>
-          {missing && <small className="adm-warn">ไม่พบ section นี้ใน body (ถูกลบหรือเปลี่ยนชื่อ)</small>}
-        </Row>
-      )}
-      {action === 'link' && (
-        <Text label="ลิงก์" value={link} placeholder="https://… หรือ /หน้าอื่น" onChange={(v) => onChange({ action, target, link: v || null })} />
+      {action !== 'none' && action !== 'dropdown' && (
+        <>
+          <Row label="ไปยัง section" hint={anchors.length ? 'เลือก section ปลายทาง' : 'ยังไม่มี section ใน body'}>
+            <select value={target ?? ''} onChange={(e) => onChange({ action, target: e.target.value || null, link })}>
+              <option value="">ไม่เลือก section</option>
+              {anchors.map((a) => <option key={a} value={a}>{a}</option>)}
+              {target && !anchors.includes(target) && <option value={target}>{target} (ไม่พบ)</option>}
+            </select>
+          </Row>
+          <Text label="ลิงก์ URL" value={link} placeholder="https://… หรือ /หน้าอื่น" onChange={(v) => onChange({ action, target, link: v || null })} />
+          {onNewTabChange && <Check label="เปิดหน้าใหม่" checked={openNewTab ?? false} onChange={onNewTabChange} />}
+        </>
       )}
     </>
   )

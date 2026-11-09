@@ -2,7 +2,8 @@
 import type { CSSProperties } from 'react'
 import type { BodySection } from '@/lib/types'
 import { tplOf } from '@/lib/meta'
-import { A, safeUrl } from './link'
+import { A, destinationHref } from './link'
+import { VideoPlayer } from './VideoPlayer'
 
 const SIZE = { s: 0.85, m: 1, l: 1.35 } as const
 const ALIGN = { left: 'flex-start', center: 'center', right: 'flex-end' } as const
@@ -14,7 +15,7 @@ function Title({ s, h1 }: { s: BodySection; h1?: boolean }) {
   const Tag = h1 ? 'h1' : 'h2'
   return (
     <Tag className="ttl" style={style}>
-      {s.title_url ? <A href={safeUrl(s.title_url)}>{s.title}</A> : s.title}
+      <A href={destinationHref(s.title_target_section, s.title_url)} newTab={s.title_open_new_tab}>{s.title}</A>
     </Tag>
   )
 }
@@ -23,19 +24,25 @@ function Text({ s }: { s: BodySection }) {
   if (!s.show_body || !s.body_text) return null
   return (
     <p className="txt" style={{ color: s.body_color }}>
-      {s.body_url ? <A href={safeUrl(s.body_url)}>{s.body_text}</A> : s.body_text}
+      <A href={destinationHref(s.body_target_section, s.body_url)} newTab={s.body_open_new_tab}>{s.body_text}</A>
     </p>
   )
 }
 
-function Btn({ s }: { s: BodySection }) {
+function Btn({ s, href, newTab }: { s: BodySection; href?: string | null; newTab?: boolean }) {
   if (!s.btn_enabled || !s.btn_label) return null
   return (
     <div>
       <A
-        href={safeUrl(s.btn_url)}
+        href={href === undefined ? destinationHref(s.btn_target_section, s.btn_url) : href}
+        newTab={newTab ?? s.btn_open_new_tab}
         className="s-btn"
-        style={{ background: s.btn_bg_color, color: s.btn_text_color, borderRadius: s.btn_radius }}
+        style={{
+          background: s.btn_bg_color, color: s.btn_text_color, borderRadius: s.btn_radius,
+          border: s.btn_border_width > 0
+            ? `${s.btn_border_width}px solid ${s.btn_border_color}`
+            : '1px solid transparent',
+        }}
       >
         {s.btn_label}
       </A>
@@ -75,9 +82,11 @@ function Section({ s, first, selected }: { s: BodySection; first: boolean; selec
 
   if (type === 'textimg') {
     const img = s.image_url ? (
-      <A href={safeUrl(s.image_link_url)}>
-        <img className="ti-img" src={s.image_url} alt={s.title ?? ''} loading="lazy" />
-      </A>
+      <div className="s-image-frame" style={{ width: `${s.image_width}%` }}>
+        <A href={destinationHref(s.image_target_section, s.image_link_url)} newTab={s.image_open_new_tab}>
+          <img className="ti-img" src={s.image_url} alt={s.title ?? ''} loading="lazy" />
+        </A>
+      </div>
     ) : null
     const text = <TextBlock s={s} h1={first} />
     return (
@@ -106,9 +115,9 @@ function Section({ s, first, selected }: { s: BodySection; first: boolean; selec
                 </>
               )
               const st: CSSProperties = { background: c.bg_color, borderColor: c.border_color }
-              const href = safeUrl(c.link_url)
+              const href = destinationHref(c.target_section, c.link_url)
               return href ? (
-                <A key={c.id} href={href} className="s-card" style={st}>{inner}</A>
+                <A key={c.id} href={href} newTab={c.open_new_tab} className="s-card" style={st}>{inner}</A>
               ) : (
                 <div key={c.id} className="s-card" style={st}>{inner}</div>
               )
@@ -129,10 +138,33 @@ function Section({ s, first, selected }: { s: BodySection; first: boolean; selec
           </div>
           <div className="s-gal" style={{ ['--cols' as string]: cols } as CSSProperties}>
             {s.gallery.map((g) => (
-              <A key={g.id} href={safeUrl(g.link_url)}>
-                <img src={g.image_url} alt="" loading="lazy" />
-              </A>
+              <div key={g.id} className="s-image-frame" style={{ width: `${g.image_width}%` }}>
+                <A href={destinationHref(g.target_section, g.link_url)} newTab={g.open_new_tab}>
+                  <img src={g.image_url} alt="" loading="lazy" />
+                </A>
+              </div>
             ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (type === 'video') {
+    return (
+      <section {...common} style={{ background: s.bg_color }}>
+        <div className="wrap">
+          <div style={{ textAlign: s.text_align }}>
+            <Title s={s} h1={first} />
+            <Text s={s} />
+            {s.video_url
+              ? <VideoPlayer key={s.video_url} url={s.video_url} />
+              : <p className="s-video-error">เพิ่ม URL YouTube, Vimeo หรือไฟล์ MP4/WebM</p>}
+            <Btn
+              s={s}
+              href={destinationHref(s.video_target_section, s.video_link_url)}
+              newTab={s.video_open_new_tab}
+            />
           </div>
         </div>
       </section>

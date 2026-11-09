@@ -9,7 +9,7 @@ import { FOOTER_TYPES, PARTS, PART_LABEL, PART_TEXT_HINT, PART_URL_HINT } from '
 import { saveFooter } from '@/app/admin/actions'
 import { SiteFooter } from '@/components/site/SiteFooter'
 import {
-  Btn, Card, Check, Color, ImageField, PreviewFrame, Row, SaveBar, Sel, Text, move, useSaver,
+  Btn, Card, Check, Color, ImageField, LinkFields, Num, PreviewFrame, Row, SaveBar, Sel, Text, move, useSaver,
 } from './ui'
 
 const MAX_COLS = 4
@@ -22,7 +22,7 @@ function ensureContacts(col: FooterColumn): FooterColumn {
     : col
 }
 
-export function FooterEditor({ initial, saved }: { initial: FooterData; saved: boolean }) {
+export function FooterEditor({ initial, saved, anchors }: { initial: FooterData; saved: boolean; anchors: string[] }) {
   const [cfg, setCfg] = useState<FooterConfig>(initial.config)
   const [cols, setCols] = useState<FooterColumn[]>(() => initial.columns.map(ensureContacts))
   const [sel, setSel] = useState(0)
@@ -124,8 +124,21 @@ export function FooterEditor({ initial, saved }: { initial: FooterData; saved: b
 
                 {col.col_type === 'logo' ? (
                   <>
-                    <ImageField label="โลโก้" value={col.logo_url} folder="footer" hint="แนะนำ 400×400 px (กว้างเต็มคอลัมน์)" onChange={(logo_url) => patchCol(sel, { logo_url })} />
-                    <Text label="ลิงก์เมื่อกด" value={col.logo_link_url} placeholder="https://… (ไม่ใส่ก็ได้)" onChange={(v) => patchCol(sel, { logo_link_url: v || null })} />
+                    <ImageField
+                      label="โลโก้" value={col.logo_url} folder="footer" hint="แนะนำภาพสี่เหลี่ยม 400×400 px"
+                      width={col.logo_width}
+                      onWidthChange={(logo_width) => patchCol(sel, { logo_width })}
+                      onChange={(logo_url) => patchCol(sel, { logo_url })}
+                    />
+                    <LinkFields
+                      target={col.logo_target_section} link={col.logo_link_url}
+                      openNewTab={col.logo_open_new_tab} anchors={anchors}
+                      onChange={(p) => patchCol(sel, {
+                        ...(p.target_section !== undefined ? { logo_target_section: p.target_section } : {}),
+                        ...(p.link_url !== undefined ? { logo_link_url: p.link_url } : {}),
+                        ...(p.open_new_tab !== undefined ? { logo_open_new_tab: p.open_new_tab } : {}),
+                      })}
+                    />
                     <Text label="ข้อความใต้โลโก้" value={col.logo_text} hint="อยู่กึ่งกลางใต้โลโก้" onChange={(v) => patchCol(sel, { logo_text: v || null })} />
                     <Color label="สีข้อความ" value={col.logo_text_color} onChange={(logo_text_color) => patchCol(sel, { logo_text_color })} />
                   </>
@@ -148,7 +161,14 @@ export function FooterEditor({ initial, saved }: { initial: FooterData; saved: b
                     {col.links.map((l, j) => (
                       <div className="adm-box" key={l.id}>
                         <Text label="ข้อความ" value={l.label} onChange={(label) => patchLink(j, { label })} />
-                        <Text label="ลิงก์" value={l.link_url} placeholder="https://… หรือ #ชื่อ-section" onChange={(v) => patchLink(j, { link_url: v || null })} />
+                        <LinkFields
+                          target={l.target_section} link={l.link_url} openNewTab={l.open_new_tab} anchors={anchors}
+                          onChange={(p) => patchLink(j, {
+                            ...(p.target_section !== undefined ? { target_section: p.target_section } : {}),
+                            ...(p.link_url !== undefined ? { link_url: p.link_url } : {}),
+                            ...(p.open_new_tab !== undefined ? { open_new_tab: p.open_new_tab } : {}),
+                          })}
+                        />
                         <Color label="สีข้อความ" value={l.text_color} onChange={(text_color) => patchLink(j, { text_color })} />
                         <div className="adm-actions" style={{ marginBottom: 0 }}>
                           <Btn sm disabled={j === 0} onClick={() => patchCol(sel, { links: move(col.links, j, -1) })}>↑</Btn>
@@ -178,7 +198,17 @@ export function FooterEditor({ initial, saved }: { initial: FooterData; saved: b
                           <Text label="ข้อความปุ่ม" value={c.btn_label} onChange={(btn_label) => patchContact(sel, part, { btn_label })} />
                           <Color label="สีปุ่ม" value={c.btn_bg_color} onChange={(btn_bg_color) => patchContact(sel, part, { btn_bg_color })} />
                           <Color label="สีข้อความปุ่ม" value={c.btn_text_color} onChange={(btn_text_color) => patchContact(sel, part, { btn_text_color })} />
-                          <Text label="ลิงก์ปุ่ม" value={c.btn_url} placeholder={PART_URL_HINT[part]} onChange={(v) => patchContact(sel, part, { btn_url: v || null })} />
+                          <Num label="ความหนาขอบ" value={c.btn_border_width} min={0} max={6} hint="0 = ไม่มีขอบ" onChange={(btn_border_width) => patchContact(sel, part, { btn_border_width })} />
+                          <Color label="สีขอบ" value={c.btn_border_color} onChange={(btn_border_color) => patchContact(sel, part, { btn_border_color })} />
+                          <LinkFields
+                            target={c.btn_target_section} link={c.btn_url} openNewTab={c.btn_open_new_tab} anchors={anchors}
+                            onChange={(p) => patchContact(sel, part, {
+                              ...(p.target_section !== undefined ? { btn_target_section: p.target_section } : {}),
+                              ...(p.link_url !== undefined ? { btn_url: p.link_url } : {}),
+                              ...(p.open_new_tab !== undefined ? { btn_open_new_tab: p.open_new_tab } : {}),
+                            })}
+                          />
+                          <p className="adm-sub" style={{ fontSize: '.78rem', margin: 0 }}>ประเภทลิงก์ที่แนะนำ: {PART_URL_HINT[part]}</p>
                         </>
                       )}
                     </div>

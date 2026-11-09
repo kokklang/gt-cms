@@ -16,6 +16,48 @@ export function hrefFor(action: string, section?: string | null, url?: string | 
   return null
 }
 
+export function destinationHref(section?: string | null, url?: string | null): string | null {
+  return section ? `#${section}` : safeUrl(url)
+}
+
+export type VideoSource = { type: 'file' | 'embed'; url: string }
+
+export function videoSource(raw?: string | null): VideoSource | null {
+  const url = safeUrl(raw)
+  if (!url) return null
+  if (url.startsWith('/')) return { type: 'file', url }
+  if (!/^https?:/i.test(url)) return null
+
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    return { type: 'file', url }
+  }
+
+  const host = parsed.hostname.toLowerCase().replace(/^www\./, '')
+  let youtubeId: string | null = null
+  if (host === 'youtu.be') {
+    youtubeId = parsed.pathname.split('/').filter(Boolean)[0] ?? null
+  } else if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
+    youtubeId = parsed.searchParams.get('v')
+    if (!youtubeId) {
+      const match = parsed.pathname.match(/^\/(?:embed|shorts|live)\/([A-Za-z0-9_-]+)/)
+      youtubeId = match?.[1] ?? null
+    }
+  }
+  if (youtubeId && /^[A-Za-z0-9_-]+$/.test(youtubeId)) {
+    return { type: 'embed', url: `https://www.youtube-nocookie.com/embed/${youtubeId}?rel=0` }
+  }
+
+  if (host === 'vimeo.com' || host === 'player.vimeo.com') {
+    const id = parsed.pathname.split('/').filter(Boolean).find((part) => /^\d+$/.test(part))
+    if (id) return { type: 'embed', url: `https://player.vimeo.com/video/${id}` }
+  }
+
+  return { type: 'file', url }
+}
+
 export function A({
   href, newTab, className, style, children,
 }: {

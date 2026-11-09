@@ -6,7 +6,7 @@ create type footer_col_type as enum
   ('logo','links','mapphone','phone','map','email','line');
 create type contact_part as enum ('map','phone','email','line');
 create type body_template as enum
-  ('hero-c','hero-l','ti-l','ti-r','cards','gal3','gal2','cta','txt');
+  ('hero-c','hero-l','ti-l','ti-r','cards','gal3','gal2','cta','txt','video');
 
 create table site_sections (
   id uuid primary key default gen_random_uuid(),
@@ -22,15 +22,18 @@ create table header_config (
   section_id uuid not null unique references site_sections(id) on delete cascade,
 
   bg_color text default '#141414',
+  bg_image_url text,
 
   -- โซน 1: hero / โลโก้
   logo_mode text not null default 'text' check (logo_mode in ('text','logo')),
   logo_text text,
   logo_url text,
+  logo_width smallint default 100,
   logo_action click_action not null default 'none'
     check (logo_action in ('none','section','link')),
   logo_target_section text,                 -- anchor_name ของ body_sections
   logo_link_url text,
+  logo_open_new_tab boolean default false,
 
   -- โซน 3: ช่องล็อกอิน
   login_enabled boolean default true,
@@ -39,10 +42,13 @@ create table header_config (
   login_text text default 'เข้าสู่ระบบ',
   login_text_color text default '#141414',
   login_btn_color text default '#F5A524',
+  login_border_width smallint default 0,
+  login_border_color text default '#F5A524',
   login_action click_action not null default 'link'
     check (login_action in ('none','section','link')),
   login_target_section text,
-  login_link_url text
+  login_link_url text,
+  login_open_new_tab boolean default false
 );
 
 -- โซน 2: ปุ่มนำทาง (สูงสุด 8)
@@ -107,24 +113,39 @@ create table body_sections (
   title_color text default '#141414',
   title_size text default 'm' check (title_size in ('s','m','l')),
   title_url text,
+  title_target_section text,
+  title_open_new_tab boolean default false,
 
   -- ข้อความ
   show_body boolean default true,
   body_text text,
   body_color text default '#444441',
   body_url text,
+  body_target_section text,
+  body_open_new_tab boolean default false,
 
   -- รูป: hero = รูปพื้นหลัง / ti-l, ti-r = รูปภาพ
   image_url text,
+  image_width smallint default 100,
   image_link_url text,
+  image_target_section text,
+  image_open_new_tab boolean default false,
+  video_url text,
+  video_link_url text,
+  video_target_section text,
+  video_open_new_tab boolean default false,
 
   -- ปุ่ม
   btn_enabled boolean default false,
   btn_label text,
   btn_bg_color text default '#F5A524',
   btn_text_color text default '#141414',
+  btn_border_width smallint default 0,
+  btn_border_color text default '#F5A524',
   btn_radius smallint default 6,
   btn_url text,
+  btn_target_section text,
+  btn_open_new_tab boolean default false,
 
   unique (section_id, sort_order) deferrable initially deferred,
   unique (section_id, anchor_name)
@@ -138,6 +159,8 @@ create table body_cards (
   title text,
   description text,
   link_url text,
+  target_section text,
+  open_new_tab boolean default false,
   bg_color text default '#FFFFFF',
   border_color text default '#D3D1C7',
   title_color text default '#141414',
@@ -152,6 +175,9 @@ create table body_gallery_images (
   sort_order smallint not null check (sort_order between 1 and 6),
   image_url text not null,
   link_url text,
+  target_section text,
+  open_new_tab boolean default false,
+  image_width smallint default 100,
   unique (body_section_id, sort_order)
 );
 
@@ -176,6 +202,9 @@ create table footer_columns (
   logo_text text,
   logo_text_color text default '#FFFFFF',
   logo_link_url text,
+  logo_target_section text,
+  logo_open_new_tab boolean default false,
+  logo_width smallint default 100,
   -- ชนิด line
   line_qr_url text,
   unique (footer_id, position)
@@ -188,6 +217,8 @@ create table footer_links (
   sort_order smallint not null,
   label text not null,
   link_url text,
+  target_section text,
+  open_new_tab boolean default false,
   text_color text default '#FFFFFF'
 );
 
@@ -201,7 +232,11 @@ create table footer_contacts (
   btn_label text,
   btn_bg_color text default '#F5A524',
   btn_text_color text default '#141414',
+  btn_border_width smallint default 0,
+  btn_border_color text default '#F5A524',
   btn_url text,                           -- https://maps..., tel:..., mailto:..., https://line.me/...
+  btn_target_section text,
+  btn_open_new_tab boolean default false,
   unique (column_id, part)
 );
 

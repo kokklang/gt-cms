@@ -2,7 +2,7 @@
 import type { CSSProperties } from 'react'
 import type { ContactPart, FooterColumn, FooterData } from '@/lib/types'
 import { PARTS } from '@/lib/meta'
-import { A, safeUrl } from './link'
+import { A, destinationHref } from './link'
 
 function Part({ col, part }: { col: FooterColumn; part: ContactPart }) {
   const p = col.contacts.find((x) => x.part === part)
@@ -15,9 +15,16 @@ function Part({ col, part }: { col: FooterColumn; part: ContactPart }) {
       )}
       {p.btn_enabled && p.btn_label && (
         <A
-          href={safeUrl(p.btn_url)}
+          href={destinationHref(p.btn_target_section, p.btn_url)}
+          newTab={p.btn_open_new_tab}
           className="ft-btn"
-          style={{ background: p.btn_bg_color, color: p.btn_text_color }}
+          style={{
+            background: p.btn_bg_color,
+            color: p.btn_text_color,
+            border: p.btn_border_width > 0
+              ? `${p.btn_border_width}px solid ${p.btn_border_color}`
+              : '1px solid transparent',
+          }}
         >
           {p.btn_label}
         </A>
@@ -28,12 +35,12 @@ function Part({ col, part }: { col: FooterColumn; part: ContactPart }) {
 
 function Column({ col }: { col: FooterColumn }) {
   if (col.col_type === 'logo') {
-    const href = safeUrl(col.logo_link_url)
+    const href = destinationHref(col.logo_target_section, col.logo_link_url)
     return (
       <div>
-        <A href={href}>
+        <A href={href} newTab={col.logo_open_new_tab}>
           {col.logo_url ? (
-            <img className="ft-logo" src={col.logo_url} alt={col.logo_text ?? 'โลโก้'} />
+            <img className="ft-logo" src={col.logo_url} alt={col.logo_text ?? 'โลโก้'} style={{ width: `${col.logo_width}%` }} />
           ) : null}
         </A>
         {col.logo_text && (
@@ -49,7 +56,13 @@ function Column({ col }: { col: FooterColumn }) {
         <ul className="ft-list">
           {col.links.map((l) => (
             <li key={l.id}>
-              <A href={safeUrl(l.link_url)} style={{ color: l.text_color }}>{l.label}</A>
+              <A
+                href={destinationHref(l.target_section, l.link_url)}
+                newTab={l.open_new_tab}
+                style={{ color: l.text_color }}
+              >
+                {l.label}
+              </A>
             </li>
           ))}
         </ul>

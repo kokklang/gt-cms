@@ -2,7 +2,7 @@ import type { BodyTemplate, ContactPart, FooterColType } from './types'
 
 export const TEMPLATES: {
   key: BodyTemplate
-  type: 'hero' | 'textimg' | 'cards' | 'gallery' | 'cta' | 'text'
+  type: 'hero' | 'textimg' | 'cards' | 'gallery' | 'cta' | 'text' | 'video'
   name: string
 }[] = [
   { key: 'hero-c', type: 'hero', name: 'Hero กึ่งกลาง' },
@@ -14,6 +14,16 @@ export const TEMPLATES: {
   { key: 'gal2', type: 'gallery', name: 'แกลเลอรี 2 คอลัมน์' },
   { key: 'cta', type: 'cta', name: 'ปุ่มเรียกร้อง CTA' },
   { key: 'txt', type: 'text', name: 'ข้อความล้วน' },
+  { key: 'video', type: 'video', name: 'วิดีโอ + ลิงก์' },
+]
+export const ADD_TEMPLATES: { key: BodyTemplate; name: string }[] = [
+  { key: 'hero-c', name: 'Hero' },
+  { key: 'ti-l', name: 'รูปภาพ + ข้อความ' },
+  { key: 'cards', name: 'การ์ดบริการ' },
+  { key: 'gal3', name: 'แกลเลอรีรูปภาพ' },
+  { key: 'cta', name: 'ปุ่มเรียกร้อง CTA' },
+  { key: 'txt', name: 'ข้อความล้วน' },
+  { key: 'video', name: 'วิดีโอ + ลิงก์' },
 ]
 export const tplOf = (k: BodyTemplate) => TEMPLATES.find((t) => t.key === k)!
 

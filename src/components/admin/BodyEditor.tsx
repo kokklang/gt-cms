@@ -4,11 +4,11 @@ import type {
   BodyCard, BodyImage, BodyPayload, BodySection, BodyTemplate,
 } from '@/lib/types'
 import { newBodySection, newCard, uid } from '@/lib/defaults'
-import { TEMPLATES, tplOf } from '@/lib/meta'
+import { ADD_TEMPLATES, TEMPLATES, tplOf } from '@/lib/meta'
 import { saveBody } from '@/app/admin/actions'
 import { SiteBody } from '@/components/site/SiteBody'
 import {
-  Btn, Card, Check, Color, ImageField, PreviewFrame, Row, RowTools, SaveBar, Sel, Text,
+  Btn, Card, Check, Color, ImageField, ImageSizeChoices, LinkFields, Num, PreviewFrame, Row, RowTools, SaveBar, Sel, Text,
   move, uploadImage, useSaver, type Opt,
 } from './ui'
 
@@ -88,7 +88,10 @@ export function BodyEditor({
     for (const f of list) {
       try {
         const url = await uploadImage(f, 'body')
-        added.push({ id: uid(), body_section_id: secId, sort_order: 0, image_url: url, link_url: null })
+        added.push({
+          id: uid(), body_section_id: secId, sort_order: 0, image_url: url, link_url: null,
+          target_section: null, open_new_tab: false, image_width: 100,
+        })
       } catch (e) {
         setUpErr(e instanceof Error ? e.message : String(e))
       }
@@ -155,7 +158,7 @@ export function BodyEditor({
             <Btn sm onClick={() => setShowTpl((v) => !v)}>+ เพิ่ม section</Btn>
             {showTpl && (
               <div className="adm-tpls">
-                {TEMPLATES.map((t) => (
+                {ADD_TEMPLATES.map((t) => (
                   <button key={t.key} type="button" className="adm-tpl" onClick={() => add(t.key)}>
                     {t.name}
                   </button>
@@ -166,7 +169,21 @@ export function BodyEditor({
 
           {s && type && (
             <Card title={`แก้ไข section ที่ ${sel + 1}`}>
-              <Sel label="template" value={s.template} options={TEMPLATES.map((t): Opt => [t.key, t.name])} onChange={(v) => setTemplate(v as BodyTemplate)} />
+              <Sel
+                label="template"
+                value={ADD_TEMPLATES.find((t) => tplOf(t.key).type === type)?.key ?? s.template}
+                options={ADD_TEMPLATES.map((t): Opt => [t.key, t.name])}
+                onChange={(v) => setTemplate(v as BodyTemplate)}
+              />
+              {type === 'hero' && (
+                <Sel label="การจัดวาง" value={s.template} options={TEMPLATES.filter((t) => t.type === 'hero').map((t): Opt => [t.key, t.name.replace('Hero ', '')])} onChange={(v) => setTemplate(v as BodyTemplate)} />
+              )}
+              {type === 'textimg' && (
+                <Sel label="การจัดวาง" value={s.template} options={TEMPLATES.filter((t) => t.type === 'textimg').map((t): Opt => [t.key, t.name])} onChange={(v) => setTemplate(v as BodyTemplate)} />
+              )}
+              {type === 'gallery' && (
+                <Sel label="จำนวนคอลัมน์" value={s.template} options={TEMPLATES.filter((t) => t.type === 'gallery').map((t): Opt => [t.key, t.name.replace('แกลเลอรี ', '')])} onChange={(v) => setTemplate(v as BodyTemplate)} />
+              )}
               <Text
                 label="ชื่อ section" value={s.anchor_name}
                 hint="ภาษาอังกฤษ/ตัวเลข/ขีดกลาง ใช้เป็นปลายทางของปุ่ม “ไป section” ใน header"
@@ -184,7 +201,14 @@ export function BodyEditor({
                   <Text label="ข้อความ" value={s.title} onChange={(v) => patch(sel, { title: v })} />
                   <Color label="สีหัวข้อ" value={s.title_color} onChange={(title_color) => patch(sel, { title_color })} />
                   <Sel label="ขนาด" value={s.title_size} options={SIZES} onChange={(v) => patch(sel, { title_size: v as BodySection['title_size'] })} />
-                  <Text label="ลิงก์หัวข้อ" value={s.title_url} placeholder="https://… หรือ #ชื่อ-section (ไม่ใส่ก็ได้)" onChange={(v) => patch(sel, { title_url: v || null })} />
+                  <LinkFields
+                    target={s.title_target_section} link={s.title_url} openNewTab={s.title_open_new_tab} anchors={anchors}
+                    onChange={(p) => patch(sel, {
+                      ...(p.target_section !== undefined ? { title_target_section: p.target_section } : {}),
+                      ...(p.link_url !== undefined ? { title_url: p.link_url } : {}),
+                      ...(p.open_new_tab !== undefined ? { title_open_new_tab: p.open_new_tab } : {}),
+                    })}
+                  />
                 </>
               )}
 
@@ -197,7 +221,14 @@ export function BodyEditor({
                     <>
                       <Text label="ข้อความ" area value={s.body_text} onChange={(v) => patch(sel, { body_text: v })} />
                       <Color label="สีข้อความ" value={s.body_color} onChange={(body_color) => patch(sel, { body_color })} />
-                      <Text label="ลิงก์ข้อความ" value={s.body_url} placeholder="https://… (ไม่ใส่ก็ได้)" onChange={(v) => patch(sel, { body_url: v || null })} />
+                      <LinkFields
+                        target={s.body_target_section} link={s.body_url} openNewTab={s.body_open_new_tab} anchors={anchors}
+                        onChange={(p) => patch(sel, {
+                          ...(p.target_section !== undefined ? { body_target_section: p.target_section } : {}),
+                          ...(p.link_url !== undefined ? { body_url: p.link_url } : {}),
+                          ...(p.open_new_tab !== undefined ? { body_open_new_tab: p.open_new_tab } : {}),
+                        })}
+                      />
                     </>
                   )}
                 </>
@@ -210,11 +241,28 @@ export function BodyEditor({
                   <ImageField
                     label={type === 'hero' ? 'รูปพื้นหลัง' : 'รูปภาพ'} value={s.image_url} folder="body"
                     hint={type === 'hero' ? 'แนะนำ 1920×800 px' : 'แนะนำ 800×600 px'}
+                    width={type === 'textimg' ? s.image_width : undefined}
+                    onWidthChange={type === 'textimg' ? (image_width) => patch(sel, { image_width }) : undefined}
                     onChange={(image_url) => patch(sel, { image_url })}
                   />
                   {type === 'textimg' && (
-                    <Text label="ลิงก์รูป" value={s.image_link_url} placeholder="https://… (ไม่ใส่ก็ได้)" onChange={(v) => patch(sel, { image_link_url: v || null })} />
+                    <LinkFields
+                      target={s.image_target_section} link={s.image_link_url} openNewTab={s.image_open_new_tab} anchors={anchors}
+                      onChange={(p) => patch(sel, {
+                        ...(p.target_section !== undefined ? { image_target_section: p.target_section } : {}),
+                        ...(p.link_url !== undefined ? { image_link_url: p.link_url } : {}),
+                        ...(p.open_new_tab !== undefined ? { image_open_new_tab: p.open_new_tab } : {}),
+                      })}
+                    />
                   )}
+                </>
+              )}
+
+              {type === 'video' && (
+                <>
+                  <hr className="adm-sep" />
+                  <p className="adm-subh">รองรับลิงก์ YouTube, Vimeo และ URL ไฟล์ MP4/WebM โดยตรง</p>
+                  <Text label="URL วิดีโอ" value={s.video_url} placeholder="https://youtu.be/… หรือ https://…/video.mp4" hint="ลิงก์แชร์ YouTube/Vimeo จะฝังเครื่องเล่นให้โดยอัตโนมัติ" onChange={(video_url) => patch(sel, { video_url: video_url || null })} />
                 </>
               )}
 
@@ -234,7 +282,14 @@ export function BodyEditor({
                     <div className="adm-box" key={c.id}>
                       <Text label="หัวข้อ" value={c.title} onChange={(title) => patchCard(j, { title })} />
                       <Text label="ข้อความ" value={c.description} onChange={(description) => patchCard(j, { description })} />
-                      <Text label="ลิงก์" value={c.link_url} placeholder="https://… (ไม่ใส่ก็ได้)" onChange={(v) => patchCard(j, { link_url: v || null })} />
+                      <LinkFields
+                        target={c.target_section} link={c.link_url} openNewTab={c.open_new_tab} anchors={anchors}
+                        onChange={(p) => patchCard(j, {
+                          ...(p.target_section !== undefined ? { target_section: p.target_section } : {}),
+                          ...(p.link_url !== undefined ? { link_url: p.link_url } : {}),
+                          ...(p.open_new_tab !== undefined ? { open_new_tab: p.open_new_tab } : {}),
+                        })}
+                      />
                       <Color label="สีพื้น" value={c.bg_color} onChange={(bg_color) => patchCard(j, { bg_color })} />
                       <Color label="สีขอบ" value={c.border_color} onChange={(border_color) => patchCard(j, { border_color })} />
                       <Color label="สีหัวข้อ" value={c.title_color} onChange={(title_color) => patchCard(j, { title_color })} />
@@ -269,11 +324,21 @@ export function BodyEditor({
                   </Row>
                   {s.gallery.map((g, j) => (
                     <div className="adm-box" key={g.id}>
-                      <Row>
+                      <Row label={`รูป ${j + 1}`}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img className="adm-thumb" src={g.image_url} alt="" />
-                        <input type="text" value={g.link_url ?? ''} placeholder="ลิงก์รูป (ไม่ใส่ก็ได้)" onChange={(e) => patchImage(j, { link_url: e.target.value || null })} />
                       </Row>
+                      <Row label="ขนาดรูป" hint="เลือกความกว้างแนะนำ 50%, 75% หรือ 100%">
+                        <ImageSizeChoices value={g.image_width} onChange={(image_width) => patchImage(j, { image_width })} />
+                      </Row>
+                      <LinkFields
+                        target={g.target_section} link={g.link_url} openNewTab={g.open_new_tab} anchors={anchors}
+                        onChange={(p) => patchImage(j, {
+                          ...(p.target_section !== undefined ? { target_section: p.target_section } : {}),
+                          ...(p.link_url !== undefined ? { link_url: p.link_url } : {}),
+                          ...(p.open_new_tab !== undefined ? { open_new_tab: p.open_new_tab } : {}),
+                        })}
+                      />
                       <div className="adm-actions" style={{ marginBottom: 0 }}>
                         <RowTools
                           onUp={j > 0 ? () => patch(sel, { gallery: move(s.gallery, j, -1) }) : undefined}
@@ -286,7 +351,7 @@ export function BodyEditor({
                 </>
               )}
 
-              {(type === 'hero' || type === 'textimg' || type === 'cta' || type === 'text') && (
+              {(type === 'hero' || type === 'textimg' || type === 'cta' || type === 'text' || type === 'video') && (
                 <>
                   <hr className="adm-sep" />
                   <p className="adm-subh">ปุ่ม</p>
@@ -297,7 +362,27 @@ export function BodyEditor({
                       <Color label="สีปุ่ม" value={s.btn_bg_color} onChange={(btn_bg_color) => patch(sel, { btn_bg_color })} />
                       <Color label="สีข้อความปุ่ม" value={s.btn_text_color} onChange={(btn_text_color) => patch(sel, { btn_text_color })} />
                       <Sel label="รูปทรงปุ่ม" value={String(s.btn_radius)} options={RADII} onChange={(v) => patch(sel, { btn_radius: Number(v) })} />
-                      <Text label="ลิงก์ปุ่ม" value={s.btn_url} placeholder="https://… หรือ #ชื่อ-section" onChange={(v) => patch(sel, { btn_url: v || null })} />
+                      <Color label="สีขอบปุ่ม" value={s.btn_border_color} onChange={(btn_border_color) => patch(sel, { btn_border_color })} />
+                      <Num label="ความหนาขอบ" value={s.btn_border_width} min={0} max={6} hint="0 = ไม่มีขอบ" onChange={(btn_border_width) => patch(sel, { btn_border_width })} />
+                      {type === 'video' ? (
+                        <LinkFields
+                          target={s.video_target_section} link={s.video_link_url} openNewTab={s.video_open_new_tab} anchors={anchors}
+                          onChange={(p) => patch(sel, {
+                            ...(p.target_section !== undefined ? { video_target_section: p.target_section } : {}),
+                            ...(p.link_url !== undefined ? { video_link_url: p.link_url } : {}),
+                            ...(p.open_new_tab !== undefined ? { video_open_new_tab: p.open_new_tab } : {}),
+                          })}
+                        />
+                      ) : (
+                        <LinkFields
+                          target={s.btn_target_section} link={s.btn_url} openNewTab={s.btn_open_new_tab} anchors={anchors}
+                          onChange={(p) => patch(sel, {
+                            ...(p.target_section !== undefined ? { btn_target_section: p.target_section } : {}),
+                            ...(p.link_url !== undefined ? { btn_url: p.link_url } : {}),
+                            ...(p.open_new_tab !== undefined ? { btn_open_new_tab: p.open_new_tab } : {}),
+                          })}
+                        />
+                      )}
                     </>
                   )}
                 </>

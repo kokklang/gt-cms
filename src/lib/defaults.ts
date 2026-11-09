@@ -9,12 +9,13 @@ export const uid = () => globalThis.crypto.randomUUID()
 /* ───────── header ───────── */
 export function newHeaderConfig(sectionId: string): HeaderConfig {
   return {
-    id: uid(), section_id: sectionId, bg_color: '#141414',
+    id: uid(), section_id: sectionId, bg_color: '#141414', bg_image_url: null, logo_width: 100,
     logo_mode: 'text', logo_text: 'GT7 MOTOR', logo_url: null,
-    logo_action: 'none', logo_target_section: null, logo_link_url: null,
+    logo_action: 'none', logo_target_section: null, logo_link_url: null, logo_open_new_tab: false,
     login_enabled: true, login_use_logo: false, login_logo_url: null,
     login_text: 'เข้าสู่ระบบ', login_text_color: '#141414', login_btn_color: '#F5A524',
-    login_action: 'none', login_target_section: null, login_link_url: null,
+    login_border_width: 0, login_border_color: '#F5A524',
+    login_action: 'none', login_target_section: null, login_link_url: null, login_open_new_tab: false,
   }
 }
 export function newNavItem(headerId: string, n: number): NavItem {
@@ -52,6 +53,7 @@ const BODY_TEXT: Record<string, [string, string]> = {
   gallery: ['ผลงานของเรา', ''],
   cta: ['พร้อมเริ่มใช้งานแล้วหรือยัง', 'ติดต่อเราวันนี้'],
   text: ['เกี่ยวกับเรา', 'เล่าเรื่องราวของร้านหรือบริษัทตรงนี้'],
+  video: ['วิดีโอแนะนำ', ''],
 }
 export function uniqueAnchor(existing: string[], base: string) {
   let n = 1
@@ -63,6 +65,7 @@ export function newCard(sectionId: string, n: number): BodyCard {
   return {
     id: uid(), body_section_id: sectionId, sort_order: n,
     title: `บริการ ${n}`, description: 'รายละเอียดสั้นๆ', link_url: null,
+    target_section: null, open_new_tab: false,
     bg_color: '#FFFFFF', border_color: '#D3D1C7', title_color: '#141414', desc_color: '#5F5E5A',
   }
 }
@@ -79,10 +82,16 @@ export function newBodySection(
     bg_color: dark ? '#141414' : '#FFFFFF',
     text_align: template === 'hero-l' || type === 'textimg' ? 'left' : 'center',
     show_title: true, title, title_color: dark ? '#FFFFFF' : '#141414', title_size: 'm', title_url: null,
+    title_target_section: null, title_open_new_tab: false,
     show_body: true, body_text: body, body_color: dark ? '#D3D1C7' : '#444441', body_url: null,
-    image_url: null, image_link_url: null,
+    body_target_section: null, body_open_new_tab: false,
+    image_url: null, image_width: 100, image_link_url: null,
+    image_target_section: null, image_open_new_tab: false, video_url: null,
+    video_link_url: null, video_target_section: null, video_open_new_tab: false,
     btn_enabled: type === 'hero' || type === 'cta',
-    btn_label: 'เริ่มใช้งาน', btn_bg_color: '#F5A524', btn_text_color: '#141414', btn_radius: 6, btn_url: null,
+    btn_label: 'เริ่มใช้งาน', btn_bg_color: '#F5A524', btn_text_color: '#141414',
+    btn_border_width: 0, btn_border_color: '#F5A524', btn_radius: 6, btn_url: null,
+    btn_target_section: null, btn_open_new_tab: false,
     cards: type === 'cards' ? [newCard(id, 1), newCard(id, 2), newCard(id, 3)] : [],
     gallery: [],
   }
@@ -111,11 +120,16 @@ export function newFooterConfig(sectionId: string): FooterConfig {
 export function newContact(columnId: string, part: ContactPart): FooterContact {
   return {
     id: uid(), column_id: columnId, part, text_value: '', btn_enabled: false,
-    btn_label: PART_BTN_LABEL[part], btn_bg_color: '#F5A524', btn_text_color: '#141414', btn_url: null,
+    btn_label: PART_BTN_LABEL[part], btn_bg_color: '#F5A524', btn_text_color: '#141414',
+    btn_border_width: 0, btn_border_color: '#F5A524', btn_url: null,
+    btn_target_section: null, btn_open_new_tab: false,
   }
 }
 export function newLink(columnId: string, n: number, color = '#FFFFFF'): FooterLink {
-  return { id: uid(), column_id: columnId, sort_order: n, label: 'ลิงก์ใหม่', link_url: null, text_color: color }
+  return {
+    id: uid(), column_id: columnId, sort_order: n, label: 'ลิงก์ใหม่', link_url: null,
+    target_section: null, open_new_tab: false, text_color: color,
+  }
 }
 export function newFooterColumn(footerId: string, position: number, type: FooterColType): FooterColumn {
   const id = uid()
@@ -123,7 +137,8 @@ export function newFooterColumn(footerId: string, position: number, type: Footer
     id, footer_id: footerId, position, col_type: type,
     title: type === 'logo' ? null : 'หัวข้อใหม่', text_color: '#FFFFFF',
     logo_url: null, logo_text: type === 'logo' ? 'GT7 MOTOR' : null, logo_text_color: '#FFFFFF',
-    logo_link_url: null, line_qr_url: null,
+    logo_link_url: null, logo_target_section: null, logo_open_new_tab: false,
+    logo_width: 100, line_qr_url: null,
     links: type === 'links' ? [newLink(id, 1), newLink(id, 2)] : [],
     contacts: PARTS[type].map((part) => newContact(id, part)),
   }

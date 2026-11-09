@@ -7,21 +7,27 @@ export interface HeaderConfig {
   id: string
   section_id: string
   bg_color: string
+  bg_image_url: string | null
   logo_mode: 'text' | 'logo'
+  logo_width: number
   logo_text: string | null
   logo_url: string | null
   logo_action: LinkAction
   logo_target_section: string | null
   logo_link_url: string | null
+  logo_open_new_tab: boolean
   login_enabled: boolean
   login_use_logo: boolean
   login_logo_url: string | null
   login_text: string | null
   login_text_color: string
   login_btn_color: string
+  login_border_width: number
+  login_border_color: string
   login_action: LinkAction
   login_target_section: string | null
   login_link_url: string | null
+  login_open_new_tab: boolean
 }
 
 export interface NavChild {
@@ -61,7 +67,7 @@ export interface HeaderData {
 
 /* ───────── body ───────── */
 export type BodyTemplate =
-  | 'hero-c' | 'hero-l' | 'ti-l' | 'ti-r' | 'cards' | 'gal3' | 'gal2' | 'cta' | 'txt'
+  | 'hero-c' | 'hero-l' | 'ti-l' | 'ti-r' | 'cards' | 'gal3' | 'gal2' | 'cta' | 'txt' | 'video'
 
 export interface BodySectionRow {
   id: string
@@ -76,18 +82,33 @@ export interface BodySectionRow {
   title_color: string
   title_size: 's' | 'm' | 'l'
   title_url: string | null
+  title_target_section: string | null
+  title_open_new_tab: boolean
   show_body: boolean
   body_text: string | null
   body_color: string
   body_url: string | null
+  body_target_section: string | null
+  body_open_new_tab: boolean
   image_url: string | null
+  image_width: number
   image_link_url: string | null
+  image_target_section: string | null
+  image_open_new_tab: boolean
+  video_url: string | null
+  video_link_url: string | null
+  video_target_section: string | null
+  video_open_new_tab: boolean
   btn_enabled: boolean
   btn_label: string | null
   btn_bg_color: string
   btn_text_color: string
+  btn_border_width: number
+  btn_border_color: string
   btn_radius: number
   btn_url: string | null
+  btn_target_section: string | null
+  btn_open_new_tab: boolean
 }
 export interface BodyCard {
   id: string
@@ -96,6 +117,8 @@ export interface BodyCard {
   title: string | null
   description: string | null
   link_url: string | null
+  target_section: string | null
+  open_new_tab: boolean
   bg_color: string
   border_color: string
   title_color: string
@@ -107,6 +130,9 @@ export interface BodyImage {
   sort_order: number
   image_url: string
   link_url: string | null
+  target_section: string | null
+  open_new_tab: boolean
+  image_width: number
 }
 export type BodySection = BodySectionRow & { cards: BodyCard[]; gallery: BodyImage[] }
 
@@ -132,6 +158,9 @@ export interface FooterColumnRow {
   logo_text: string | null
   logo_text_color: string
   logo_link_url: string | null
+  logo_target_section: string | null
+  logo_open_new_tab: boolean
+  logo_width: number
   line_qr_url: string | null
 }
 export interface FooterLink {
@@ -140,6 +169,8 @@ export interface FooterLink {
   sort_order: number
   label: string
   link_url: string | null
+  target_section: string | null
+  open_new_tab: boolean
   text_color: string
 }
 export interface FooterContact {
@@ -151,7 +182,11 @@ export interface FooterContact {
   btn_label: string | null
   btn_bg_color: string
   btn_text_color: string
+  btn_border_width: number
+  btn_border_color: string
   btn_url: string | null
+  btn_target_section: string | null
+  btn_open_new_tab: boolean
 }
 export type FooterColumn = FooterColumnRow & { links: FooterLink[]; contacts: FooterContact[] }
 export interface FooterData {

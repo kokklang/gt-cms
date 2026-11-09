@@ -36,12 +36,11 @@ function ButtonFields({
       <Text label="ข้อความ" value={v.label} onChange={(label) => onPatch({ label })} />
       <ActionFields
         action={v.action} target={v.target_section} link={v.link_url}
+        openNewTab={v.open_new_tab}
+        onNewTabChange={(open_new_tab) => onPatch({ open_new_tab })}
         anchors={anchors} allowDropdown={allowDropdown}
         onChange={(a) => onPatch({ action: a.action, target_section: a.target, link_url: a.link })}
       />
-      {(v.action === 'link' || v.action === 'section') && (
-        <Check label="เปิดแท็บใหม่" checked={v.open_new_tab} onChange={(open_new_tab) => onPatch({ open_new_tab })} />
-      )}
       <Color label="สีตัวหนังสือ" value={v.text_color} onChange={(text_color) => onPatch({ text_color })} />
       <Color label="สีปุ่ม" value={v.btn_color} onChange={(btn_color) => onPatch({ btn_color })} />
       <Num label="ความหนาขอบ" value={v.border_width} min={0} max={6} hint="0 = ไม่มีขอบ" onChange={(border_width) => onPatch({ border_width })} />
@@ -144,13 +143,25 @@ export function HeaderEditor({
             {cfg.logo_mode === 'text' ? (
               <Text label="ข้อความ" value={cfg.logo_text} onChange={(logo_text) => patchCfg({ logo_text })} />
             ) : (
-              <ImageField label="โลโก้" value={cfg.logo_url} folder="header" hint="แนะนำสูง ~80 px พื้นโปร่งใส" onChange={(logo_url) => patchCfg({ logo_url })} />
+              <ImageField
+                label="โลโก้" value={cfg.logo_url} folder="header" hint="แนะนำสูง ~80 px พื้นโปร่งใส"
+                width={cfg.logo_width}
+                onWidthChange={(logo_width) => patchCfg({ logo_width })}
+                onChange={(logo_url) => patchCfg({ logo_url })}
+              />
             )}
             <ActionFields
               action={cfg.logo_action} target={cfg.logo_target_section} link={cfg.logo_link_url} anchors={anchors}
-              onChange={(a) => patchCfg({ logo_action: a.action as HeaderConfig['logo_action'], logo_target_section: a.target, logo_link_url: a.link })}
+              openNewTab={cfg.logo_open_new_tab}
+              onNewTabChange={(logo_open_new_tab) => patchCfg({ logo_open_new_tab })}
+              onChange={(a) => patchCfg({
+                logo_action: a.action as HeaderConfig['logo_action'],
+                logo_target_section: a.target,
+                logo_link_url: a.link,
+              })}
             />
             <Color label="สีพื้น header" value={cfg.bg_color} onChange={(bg_color) => patchCfg({ bg_color })} />
+            <ImageField label="รูปพื้นหลัง header" value={cfg.bg_image_url} folder="header" hint="แนะนำภาพแนวนอน 1920×240 px" onChange={(bg_image_url) => patchCfg({ bg_image_url })} />
           </Card>
 
           <Card title={`2 · ปุ่มนำทาง (${items.length}/${MAX_ITEMS})`}>
@@ -215,9 +226,17 @@ export function HeaderEditor({
                 <Text label="ข้อความ" value={cfg.login_text} onChange={(login_text) => patchCfg({ login_text })} />
                 <Color label="สีข้อความ" value={cfg.login_text_color} onChange={(login_text_color) => patchCfg({ login_text_color })} />
                 <Color label="สีปุ่ม" value={cfg.login_btn_color} onChange={(login_btn_color) => patchCfg({ login_btn_color })} />
+                <Num label="ความหนาขอบ" value={cfg.login_border_width} min={0} max={6} hint="0 = ไม่มีขอบ" onChange={(login_border_width) => patchCfg({ login_border_width })} />
+                <Color label="สีขอบ" value={cfg.login_border_color} onChange={(login_border_color) => patchCfg({ login_border_color })} />
                 <ActionFields
                   action={cfg.login_action} target={cfg.login_target_section} link={cfg.login_link_url} anchors={anchors}
-                  onChange={(a) => patchCfg({ login_action: a.action as HeaderConfig['login_action'], login_target_section: a.target, login_link_url: a.link })}
+                  openNewTab={cfg.login_open_new_tab}
+                  onNewTabChange={(login_open_new_tab) => patchCfg({ login_open_new_tab })}
+                  onChange={(a) => patchCfg({
+                    login_action: a.action as HeaderConfig['login_action'],
+                    login_target_section: a.target,
+                    login_link_url: a.link,
+                  })}
                 />
               </>
             )}

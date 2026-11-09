@@ -8,5 +8,5 @@ export default async function FooterPage() {
   const c = r.content
   const saved = c.footer !== null
   const initial = c.footer ?? sampleFooter(c.sectionIds.footer)
-  return <FooterEditor initial={initial} saved={saved} />
+  return <FooterEditor initial={initial} saved={saved} anchors={c.body.map((s) => s.anchor_name)} />
 }
