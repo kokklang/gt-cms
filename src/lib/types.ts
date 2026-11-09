@@ -224,3 +224,13 @@ export interface ActionResult {
   ok: boolean
   error?: string
 }
+
+export type LibraryKind = 'version' | 'draft' | 'template'
+export type LibraryScope = 'page' | 'header' | 'body' | 'footer' | 'section'
+export interface LibraryItemSummary {
+  id: string
+  kind: LibraryKind
+  scope: LibraryScope
+  label: string
+  created_at: string
+}

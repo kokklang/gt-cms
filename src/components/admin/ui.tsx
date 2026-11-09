@@ -263,7 +263,7 @@ export function useSaver() {
     setSt({ k: 'saving' })
     try {
       const r = await fn()
-      setSt(r.ok ? { k: 'ok' } : { k: 'err', m: r.error })
+      setSt(r.ok ? { k: 'ok', m: r.error } : { k: 'err', m: r.error })
     } catch (e) {
       setSt({ k: 'err', m: e instanceof Error ? e.message : String(e) })
     }
@@ -271,13 +271,23 @@ export function useSaver() {
   return { st, run, reset: () => setSt({ k: 'idle' }) }
 }
 
-export function SaveBar({ st, onSave, dirtyNote }: { st: SaveState; onSave: () => void; dirtyNote?: string }) {
+export function SaveBar({
+  st, onSave, dirtyNote, onDraft, onTemplate,
+}: {
+  st: SaveState
+  onSave: () => void
+  dirtyNote?: string
+  onDraft?: () => void
+  onTemplate?: () => void
+}) {
   return (
     <div className="adm-savebar">
       <button type="button" className="btn primary" disabled={st.k === 'saving'} onClick={onSave}>
         {st.k === 'saving' ? 'กำลังบันทึก…' : 'บันทึกและเผยแพร่'}
       </button>
-      {st.k === 'ok' && <span className="adm-st-ok">บันทึกแล้ว หน้าเว็บอัปเดตแล้ว</span>}
+      {onDraft && <button type="button" className="btn" disabled={st.k === 'saving'} onClick={onDraft}>บันทึกฉบับร่าง</button>}
+      {onTemplate && <button type="button" className="btn" disabled={st.k === 'saving'} onClick={onTemplate}>บันทึกเป็น template</button>}
+      {st.k === 'ok' && <span className={st.m ? 'adm-st-warn' : 'adm-st-ok'}>{st.m ?? 'บันทึกสำเร็จ'}</span>}
       {st.k === 'err' && <span className="adm-st-err">บันทึกไม่สำเร็จ: {st.m}</span>}
       {st.k === 'idle' && dirtyNote && <span style={{ color: 'var(--muted)' }}>{dirtyNote}</span>}
     </div>

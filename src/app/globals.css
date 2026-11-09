@@ -153,6 +153,15 @@ button,input,select,textarea{font:inherit}
 .adm-tpls{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:10px}
 .adm-tpl{padding:12px 8px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);cursor:pointer;text-align:center;font-size:.82rem}
 .adm-tpl:hover{border-color:var(--amber)}
+.adm-library-start h2,.adm-card h2{margin:0 0 8px;font-size:1rem}
+.adm-library-start>p,.adm-card>.adm-sub{margin:0 0 12px}
+.adm-library-builtins{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:10px}
+.adm-library-list{display:grid;gap:8px}
+.adm-library-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}
+.adm-library-item>div:first-child{min-width:0}
+.adm-library-item strong,.adm-library-item small{display:block}
+.adm-library-item small{margin-top:4px;color:var(--muted)}
+.adm-st-warn{color:#f0c46b}
 .adm-login{display:grid;place-items:center;min-height:100vh;padding:24px}
 .adm-login form{width:100%;max-width:360px;display:grid;gap:12px}
 @media (max-width:1080px){

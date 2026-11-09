@@ -5,7 +5,7 @@ import type {
 } from '@/lib/types'
 import { newBodySection, newCard, uid } from '@/lib/defaults'
 import { ADD_TEMPLATES, TEMPLATES, tplOf } from '@/lib/meta'
-import { saveBody } from '@/app/admin/actions'
+import { saveBody, saveLibraryItem } from '@/app/admin/actions'
 import { SiteBody } from '@/components/site/SiteBody'
 import {
   Btn, Card, Check, Color, ImageField, ImageSizeChoices, LinkFields, Num, PreviewFrame, Row, RowTools, SaveBar, Sel, Text,
@@ -113,7 +113,11 @@ export function BodyEditor({
       run(async () => ({ ok: false, error: 'ชื่อ section ซ้ำกัน ต้องไม่ซ้ำในหน้าเดียวกัน' }))
       return
     }
-    const payload: BodyPayload = {
+    run(() => saveBody(getPayload()))
+  }
+
+  function getPayload(): BodyPayload {
+    return {
       section_id: sectionId,
       sections: secs.map(({ cards: _c, gallery: _g, ...row }, i) => ({
         ...row, section_id: sectionId, sort_order: i + 1,
@@ -129,7 +133,17 @@ export function BodyEditor({
           : [],
       ),
     }
-    run(() => saveBody(payload))
+  }
+
+  function saveLocal(kind: 'draft' | 'template') {
+    const isSectionTemplate = kind === 'template' && s
+    const label = window.prompt(
+      isSectionTemplate ? 'ตั้งชื่อ template section' : 'ตั้งชื่อฉบับร่าง body',
+    )
+    if (!label?.trim()) return
+    run(() => isSectionTemplate
+      ? saveLibraryItem('template', 'section', label, s)
+      : saveLibraryItem('draft', 'body', label, getPayload()))
   }
 
   return (
@@ -400,7 +414,13 @@ export function BodyEditor({
         </PreviewFrame>
       </div>
 
-      <SaveBar st={st} onSave={onSave} dirtyNote="ยังไม่ได้บันทึกการเปลี่ยนแปลง" />
+      <SaveBar
+        st={st}
+        onSave={onSave}
+        onDraft={() => saveLocal('draft')}
+        onTemplate={s ? () => saveLocal('template') : undefined}
+        dirtyNote="ยังไม่ได้บันทึกการเปลี่ยนแปลง"
+      />
     </>
   )
 }

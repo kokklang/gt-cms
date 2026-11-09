@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import type { ClickAction, HeaderConfig, HeaderData, HeaderPayload, NavChild, NavItem } from '@/lib/types'
 import { newNavChild, newNavItem } from '@/lib/defaults'
-import { saveHeader } from '@/app/admin/actions'
+import { saveHeader, saveLibraryItem } from '@/app/admin/actions'
 import { SiteHeader } from '@/components/site/SiteHeader'
 import {
   ActionFields, Btn, Card, Check, Color, ImageField, Num, PreviewFrame, Row,
@@ -114,8 +114,8 @@ export function HeaderEditor({
   const cur = items[sel] ?? null
   const child = cur && selC >= 0 ? cur.children[selC] ?? null : null
 
-  function onSave() {
-    const payload: HeaderPayload = {
+  function getPayload(): HeaderPayload {
+    return {
       config: cfg,
       items: items.map(({ children: _c, ...it }, i) => ({ ...it, header_id: cfg.id, sort_order: i + 1 })),
       children: items.flatMap((it) =>
@@ -124,7 +124,16 @@ export function HeaderEditor({
           : [],
       ),
     }
-    run(() => saveHeader(payload))
+  }
+
+  function onSave() {
+    run(() => saveHeader(getPayload()))
+  }
+
+  function saveLocal(kind: 'draft' | 'template') {
+    const label = window.prompt(kind === 'draft' ? 'ตั้งชื่อฉบับร่าง header' : 'ตั้งชื่อ template header')
+    if (!label?.trim()) return
+    run(() => saveLibraryItem(kind, 'header', label, getPayload()))
   }
 
   return (
@@ -248,7 +257,13 @@ export function HeaderEditor({
         </PreviewFrame>
       </div>
 
-      <SaveBar st={st} onSave={onSave} dirtyNote="ยังไม่ได้บันทึกการเปลี่ยนแปลง" />
+      <SaveBar
+        st={st}
+        onSave={onSave}
+        onDraft={() => saveLocal('draft')}
+        onTemplate={() => saveLocal('template')}
+        dirtyNote="ยังไม่ได้บันทึกการเปลี่ยนแปลง"
+      />
     </>
   )
 }

@@ -6,7 +6,7 @@ import type {
 } from '@/lib/types'
 import { newContact, newFooterColumn, newLink } from '@/lib/defaults'
 import { FOOTER_TYPES, PARTS, PART_LABEL, PART_TEXT_HINT, PART_URL_HINT } from '@/lib/meta'
-import { saveFooter } from '@/app/admin/actions'
+import { saveFooter, saveLibraryItem } from '@/app/admin/actions'
 import { SiteFooter } from '@/components/site/SiteFooter'
 import {
   Btn, Card, Check, Color, ImageField, LinkFields, Num, PreviewFrame, Row, SaveBar, Sel, Text, move, useSaver,
@@ -68,8 +68,8 @@ export function FooterEditor({ initial, saved, anchors }: { initial: FooterData;
     patchCol(sel, { links: col.links.map((l, m) => (m === j ? { ...l, ...p } : l)) })
   }
 
-  function onSave() {
-    const payload: FooterPayload = {
+  function getPayload(): FooterPayload {
+    return {
       config: cfg,
       columns: cols.map(({ links: _l, contacts: _c, ...c }, i) => ({ ...c, footer_id: cfg.id, position: i + 1 })),
       links: cols.flatMap((c) =>
@@ -79,7 +79,16 @@ export function FooterEditor({ initial, saved, anchors }: { initial: FooterData;
         c.contacts.filter((x) => PARTS[c.col_type].includes(x.part)).map((x) => ({ ...x, column_id: c.id })),
       ),
     }
-    run(() => saveFooter(payload))
+  }
+
+  function onSave() {
+    run(() => saveFooter(getPayload()))
+  }
+
+  function saveLocal(kind: 'draft' | 'template') {
+    const label = window.prompt(kind === 'draft' ? 'ตั้งชื่อฉบับร่าง footer' : 'ตั้งชื่อ template footer')
+    if (!label?.trim()) return
+    run(() => saveLibraryItem(kind, 'footer', label, getPayload()))
   }
 
   return (
@@ -224,7 +233,13 @@ export function FooterEditor({ initial, saved, anchors }: { initial: FooterData;
         </PreviewFrame>
       </div>
 
-      <SaveBar st={st} onSave={onSave} dirtyNote="ยังไม่ได้บันทึกการเปลี่ยนแปลง" />
+      <SaveBar
+        st={st}
+        onSave={onSave}
+        onDraft={() => saveLocal('draft')}
+        onTemplate={() => saveLocal('template')}
+        dirtyNote="ยังไม่ได้บันทึกการเปลี่ยนแปลง"
+      />
     </>
   )
 }

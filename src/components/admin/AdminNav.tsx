@@ -8,7 +8,7 @@ const ITEMS: { href: string; label: string; off?: boolean }[] = [
   { href: '/admin/header', label: 'header / navbar' },
   { href: '/admin/body', label: 'body' },
   { href: '/admin/footer', label: 'footer' },
-  { href: '#', label: 'version (เร็วๆ นี้)', off: true },
+  { href: '/admin/library', label: 'เวอร์ชัน · Template' },
   { href: '#', label: 'seo (เร็วๆ นี้)', off: true },
 ]
 

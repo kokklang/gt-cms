@@ -1,8 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
-  BodyCard, BodyImage, BodySectionRow, FooterColumnRow, FooterConfig, FooterContact,
-  FooterLink, HeaderConfig, NavChild, NavItemRow, SectionKind, SiteContent,
+  BodyCard, BodyImage, BodyPayload, BodySection, BodySectionRow, FooterColumnRow, FooterConfig,
+  FooterContact, FooterLink, FooterPayload, HeaderConfig, HeaderPayload, NavChild, NavItemRow,
+  SectionKind, SiteContent,
 } from './types'
+
+function omit<T extends object, K extends keyof T>(value: T, ...keys: K[]): Omit<T, K> {
+  const result = { ...value }
+  keys.forEach((key) => Reflect.deleteProperty(result, key))
+  return result as Omit<T, K>
+}
 
 async function all<T>(sb: SupabaseClient, table: string, order?: string): Promise<T[]> {
   let q = sb.from(table).select('*')
@@ -64,4 +71,62 @@ export async function loadContent(sb: SupabaseClient): Promise<SiteContent> {
     : null
 
   return { sectionIds, header, body, footer }
+}
+
+export function contentToPayloads(content: SiteContent) {
+  const header: HeaderPayload | null = content.header
+    ? {
+        config: content.header.config,
+        items: content.header.items.map((item) => omit(item, 'children')),
+        children: content.header.items.flatMap((item) => item.children),
+      }
+    : null
+
+  const body: BodyPayload = {
+    section_id: content.sectionIds.body,
+    sections: content.body.map((section, i) => ({
+      ...omit(section, 'cards', 'gallery'),
+      section_id: content.sectionIds.body,
+      sort_order: i + 1,
+    })),
+    cards: content.body.flatMap((section) =>
+      section.cards.map((card, i) => ({ ...card, sort_order: i + 1 })),
+    ),
+    images: content.body.flatMap((section) =>
+      section.gallery.map((image, i) => ({ ...image, sort_order: i + 1 })),
+    ),
+  }
+
+  const footer: FooterPayload | null = content.footer
+    ? {
+        config: content.footer.config,
+        columns: content.footer.columns.map((column, i) => ({
+          ...omit(column, 'links', 'contacts'),
+          position: i + 1,
+        })),
+        links: content.footer.columns.flatMap((column) =>
+          column.links.map((link, i) => ({ ...link, sort_order: i + 1 })),
+        ),
+        contacts: content.footer.columns.flatMap((column) => column.contacts),
+      }
+    : null
+
+  return { sectionIds: content.sectionIds, header, body, footer }
+}
+
+export function toBodyPayload(sectionId: string, sections: BodySection[]): BodyPayload {
+  return {
+    section_id: sectionId,
+    sections: sections.map((section, i) => ({
+      ...omit(section, 'cards', 'gallery'),
+      section_id: sectionId,
+      sort_order: i + 1,
+    })),
+    cards: sections.flatMap((section) =>
+      section.cards.map((card, i) => ({ ...card, sort_order: i + 1 })),
+    ),
+    images: sections.flatMap((section) =>
+      section.gallery.map((image, i) => ({ ...image, sort_order: i + 1 })),
+    ),
+  }
 }
